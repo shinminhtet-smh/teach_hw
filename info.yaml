@@ -19,7 +19,7 @@ project:
   source_files:
     - "hsync_generator.v"
     #- 1. Display image
-    - "Flag.v"
+   # - "Flag.v"
     - "game.v"
     # 2. Text mode
     #- "19_top_SwitchTextDisplay_playground.v"
