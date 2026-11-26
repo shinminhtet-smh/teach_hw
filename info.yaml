@@ -17,8 +17,8 @@ project:
   # Source files must be in ./src and you must list each source file separately, one per line.
   # Don't forget to also update `PROJECT_SOURCES` in test/Makefile.
   source_files:
-    - "hvsync_generator.v"
-  - 1. Display image
+  - "hvsync_generator.v"
+  #- 1. Display image
   #- "Flag.v"
   - "Blockgame.v"
     # 2. Text mode
