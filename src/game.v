@@ -12,7 +12,7 @@ module tt_um_vga_example (
 );
 
   // ==========================================
-  // 1. VGA & Gamepad Setup
+  // 1. VGA & Direct Input Setup 
   // ==========================================
   wire hsync, vsync, video_active;
   wire [1:0] R, G, B;
@@ -21,7 +21,16 @@ module tt_um_vga_example (
   assign uo_out  = {hsync, B[0], G[0], R[0], vsync, B[1], G[1], R[1]};
   assign uio_out = 0;
   assign uio_oe  = 0;
-  wire _unused_ok = &{ena, ui_in[7:1], uio_in};
+
+  // Direct button inputs from ui_in:
+  // ui_in[0] = Move UP
+  // ui_in[1] = Move DOWN
+  // ui_in[2] = Start / Restart after Game Over
+  wire inp_up    = ui_in[0];
+  wire inp_down  = ui_in[1];
+  wire inp_start = ui_in[2];
+
+  wire _unused_ok = &{ena, ui_in[7:3], uio_in};
 
   hvsync_generator vga_sync_gen (
       .clk(clk),
@@ -31,19 +40,6 @@ module tt_um_vga_example (
       .display_on(video_active),
       .hpos(pix_x),
       .vpos(pix_y)
-  );
-
-  wire inp_b, inp_y, inp_select, inp_start, inp_up, inp_down, inp_left, inp_right, inp_a, inp_x, inp_l, inp_r;
-
-  gamepad_pmod_single driver (
-      .rst_n(rst_n),
-      .clk(clk),
-      .pmod_data(ui_in[6]),
-      .pmod_clk(ui_in[5]),
-      .pmod_latch(ui_in[4]),
-      .b(inp_b), .y(inp_y), .select(inp_select), .start(inp_start),
-      .up(inp_up), .down(inp_down), .left(inp_left), .right(inp_right),
-      .a(inp_a), .x(inp_x), .l(inp_l), .r(inp_r)
   );
 
   // ==========================================
@@ -94,12 +90,12 @@ module tt_um_vga_example (
 
         PLAY: begin
           // Player Up/Down movement
-          if (inp_down) begin
+          if (inp_down && !inp_up) begin
             if (player_y + PLAYER_SIZE + PLAYER_SPEED >= 10'd479)
               player_y <= 10'd480 - PLAYER_SIZE;
             else
               player_y <= player_y + PLAYER_SPEED;
-          end else if (inp_up) begin
+          end else if (inp_up && !inp_down) begin
             if (player_y < PLAYER_SPEED)
               player_y <= 10'd0;
             else
