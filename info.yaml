@@ -18,7 +18,7 @@ project:
   # Don't forget to also update `PROJECT_SOURCES` in test/Makefile.
   source_files:
     - "hvsync_generator.v"
-  #- 1. Display image
+  - 1. Display image
   #- "Flag.v"
   - "Blockgame.v"
     # 2. Text mode
