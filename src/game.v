@@ -12,7 +12,7 @@ module tt_um_vga_example (
 );
 
   // ==========================================
-  // 1. VGA & Direct Input Setup
+  // 1. VGA & Direct Switch Inputs (No Gamepad)
   // ==========================================
   wire hsync, vsync, video_active;
   wire [1:0] R, G, B;
@@ -22,10 +22,10 @@ module tt_um_vga_example (
   assign uio_out = 0;
   assign uio_oe  = 0;
 
-  // Direct button inputs from ui_in:
+  // Direct switches in VGA Playground:
   // ui_in[0] = Move UP
   // ui_in[1] = Move DOWN
-  // ui_in[2] = Start / Restart after Game Over
+  // ui_in[2] = Restart after Game Over
   wire inp_up    = ui_in[0];
   wire inp_down  = ui_in[1];
   wire inp_start = ui_in[2];
@@ -45,13 +45,14 @@ module tt_um_vga_example (
   // ==========================================
   // 2. Game Parameters & Registers
   // ==========================================
-  localparam PLAYER_X         = 10'd64;
-  localparam PLAYER_SIZE      = 10'd24;
-  localparam PLAYER_SPEED     = 10'd4;
+  localparam PLAYER_X      = 10'd48;
+  localparam PLAYER_WIDTH  = 10'd16;
+  localparam PLAYER_HEIGHT = 10'd80;  // Tall paddle -> easy to catch!
+  localparam PLAYER_SPEED  = 10'd5;
 
   localparam ENEMY_SIZE       = 10'd24;
-  localparam ENEMY_INIT_SPEED = 10'd5;
-  localparam ENEMY_MAX_SPEED  = 10'd15;
+  localparam ENEMY_INIT_SPEED = 10'd2;  // Slow start -> easy for switches!
+  localparam ENEMY_MAX_SPEED  = 10'd10;
 
   localparam NEW_GAME  = 2'b00;
   localparam PLAY      = 2'b01;
@@ -60,18 +61,17 @@ module tt_um_vga_example (
   reg [1:0] state = NEW_GAME;
   reg [9:0] player_y;
   reg [9:0] enemy_x, enemy_y;
-
   reg [9:0] enemy_speed;
   reg [3:0] hit_count;
   reg [7:0] score;
 
-  wire hit = (enemy_x < PLAYER_X + PLAYER_SIZE) &&
+  wire hit = (enemy_x < PLAYER_X + PLAYER_WIDTH) &&
              (enemy_x + ENEMY_SIZE > PLAYER_X) &&
-             (enemy_y < player_y + PLAYER_SIZE) &&
+             (enemy_y < player_y + PLAYER_HEIGHT) &&
              (enemy_y + ENEMY_SIZE > player_y);
 
   // ==========================================
-  // 3. Game Logic (1 Frame per Update)
+  // 3. Game Logic (Updates at 60Hz on vsync)
   // ==========================================
   always @(posedge vsync) begin
     if (!rst_n) begin
@@ -79,9 +79,9 @@ module tt_um_vga_example (
     end else begin
       case (state)
         NEW_GAME: begin
-          player_y    <= 10'd228;
+          player_y    <= 10'd200;
           enemy_x     <= 10'd640;
-          enemy_y     <= 10'd200;
+          enemy_y     <= 10'd220;
           enemy_speed <= ENEMY_INIT_SPEED;
           hit_count   <= 4'd0;
           score       <= 8'd0;
@@ -89,10 +89,10 @@ module tt_um_vga_example (
         end
 
         PLAY: begin
-          // Player Up/Down movement
+          // Move Player UP / DOWN
           if (inp_down && !inp_up) begin
-            if (player_y + PLAYER_SIZE + PLAYER_SPEED >= 10'd479)
-              player_y <= 10'd480 - PLAYER_SIZE;
+            if (player_y + PLAYER_HEIGHT + PLAYER_SPEED >= 10'd480)
+              player_y <= 10'd480 - PLAYER_HEIGHT;
             else
               player_y <= player_y + PLAYER_SPEED;
           end else if (inp_up && !inp_down) begin
@@ -143,8 +143,8 @@ module tt_um_vga_example (
   // ==========================================
   // 4. Drawing & Colors
   // ==========================================
-  wire draw_player = (pix_x >= PLAYER_X) && (pix_x < PLAYER_X + PLAYER_SIZE) &&
-                     (pix_y >= player_y) && (pix_y < player_y + PLAYER_SIZE);
+  wire draw_player = (pix_x >= PLAYER_X) && (pix_x < PLAYER_X + PLAYER_WIDTH) &&
+                     (pix_y >= player_y) && (pix_y < player_y + PLAYER_HEIGHT);
 
   wire draw_enemy  = (pix_x >= enemy_x)  && (pix_x < enemy_x + ENEMY_SIZE) &&
                      (pix_y >= enemy_y)  && (pix_y < enemy_y + ENEMY_SIZE);
@@ -152,15 +152,14 @@ module tt_um_vga_example (
   reg [5:0] color;
 
   always @(*) begin
-    if (state == GAME_OVER) begin
-      color = 6'b110000;       // GAME OVER: Red
-    end else if (draw_player) begin
-      color = 6'b001111;       // Player: Cyan
-    end else if (draw_enemy) begin
-      color = 6'b110000;       // Enemy: Red
-    end else begin
-      color = 6'b000000;       // Background: Black
-    end
+    if (state == GAME_OVER)
+      color = 6'b110000;  // GAME OVER: Red
+    else if (draw_player)
+      color = 6'b001111;  // Player: Cyan
+    else if (draw_enemy)
+      color = 6'b110000;  // Enemy: Red
+    else
+      color = 6'b000000;  // Background: Black
   end
 
   assign R = video_active ? color[5:4] : 2'b00;
