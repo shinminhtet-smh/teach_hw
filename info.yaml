@@ -18,9 +18,9 @@ project:
   # Don't forget to also update `PROJECT_SOURCES` in test/Makefile.
   source_files:
     - "hsync_generator.v"
-    #- 1. Display image
-   # - "Flag.v"
-    - "game.v"
+  #- 1. Display image
+  #- "Flag.v"
+  - "game.v"
     # 2. Text mode
     #- "19_top_SwitchTextDisplay_playground.v"
     #- "19_text_screen_gen_playground.v"
