@@ -12,7 +12,7 @@ module tt_um_vga_example (
 );
 
   // ==========================================
-  // 1. VGA & Direct Input Setup 
+  // 1. VGA & Direct Input Setup (No Gamepad)
   // ==========================================
   wire hsync, vsync, video_active;
   wire [1:0] R, G, B;
